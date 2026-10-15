@@ -106,6 +106,7 @@ Africa_Delivery/
 ├── Task3/
 ├── Task4/
 ├── Task5/
+└── templates/                     ← Входные материалы для проектной работы 
 ```
 ---
 
