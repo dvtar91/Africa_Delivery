@@ -28,13 +28,13 @@ CTO настаивает на самостоятельной разработк�
 
 В результате у вас должно получиться:
 
-1. Capability Map — файл capability-map.md. Иерархия L1/L2 + таблица: capability, решение Build/Buy/Partner, обоснование, стоимость, риск.
-2. Value Stream — файлы value-stream.puml
+1. Capability Map — файл ```capability-map.md```. Иерархия L1/L2 + таблица: capability, решение Build/Buy/Partner, обоснование, стоимость, риск.
+2. Value Stream — файлы ```value-stream.md```
 .png. Диаграмма потока ценности с нанесёнными capabilities.
-3. Сервисы по capability — файл services-per-capability.md. Таблица: capability → продукт/сервис → владелец → внешняя зависимость.
-4. Roadmap — файл roadmap.md (Mermaid Gantt) или roadmap.png. Четыре контрольные точки, на каждой — scope, команда, инфраструктурная стоимость.
-5. ADR № 4 «Выбор платёжного провайдера» — файл adr-004-payment-provider.md. Шаблон ADR, обязательно с географией провайдеров и комиссией ≤ 2,5% GMV.
-6. Transition Architecture — файл transition-architecture.md. Состояния «сейчас → MVP → 12 мес.», что меняется на каждом шаге.
-7. Реестр рисков — файл risk-register.md. Таблица: риск, вероятность, влияние, митигация, владелец, триггер.
+3. Сервисы по capability — файл ```services-per-capability.md```. Таблица: capability → продукт/сервис → владелец → внешняя зависимость.
+4. Roadmap — файл ```roadmap.md``` (Mermaid Gantt). Четыре контрольные точки, на каждой — scope, команда, инфраструктурная стоимость.
+5. ADR № 4 «Выбор платёжного провайдера» — файл ```adr-004-payment-provider.md```. Шаблон ADR, обязательно с географией провайдеров и комиссией ≤ 2,5% GMV.
+6. Transition Architecture — файл ```transition-architecture.md```. Состояния «сейчас → MVP → 12 мес.», что меняется на каждом шаге.
+7. Реестр рисков — файл ```risk-register.md```. Таблица: риск, вероятность, влияние, митигация, владелец, триггер.
 
 Загрузите все получившиеся артефакты в директорию Task5.
