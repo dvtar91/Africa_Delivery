@@ -1,3 +1,4 @@
+# Схема
 ```mermaid
 flowchart LR
     Sellers["Sellers"]
@@ -44,13 +45,13 @@ flowchart LR
     class Catalog,Inventories,Ordering,Reports,Notifications,Payments,Fulfillment core
     class PaymentProviders,LogisticProviders,Couriers providerv
 ```
-Дополнительные параметры из схемы
-Параметр	Значение
-География	Nigeria, Kenya, South Africa, 15 стран
-Целевая доля рынка	40%
-Архитектура	Cloud Native
-Платформы	iOS, Android
-Защита данных	GDPR
-TCO	Не определён
-Функциональность	Features from PM
-Важно: сплошные стрелки соответствуют связям оригинальной схемы. Пунктирные линии обозначают дополнительные ассоциации, которые я интерпретировал из подписей. Модули Inventories и Reports оставлены без связей, поскольку они не указаны в исходнике.
+# Дополнительные параметры из схемы
+| Параметр | Значение |
+|----------|----------|
+| География	| Nigeria, Kenya, South Africa, 15 стран | 
+| Целевая доля рынка |	40% |
+| Архитектура |	Cloud Native |
+| Платформы | iOS, Android |
+| Защита данных | GDPR |
+| TCO |	Не определён |
+| Функциональность | Features from PM |
