@@ -7,10 +7,11 @@ flowchart LR
         direction TB
         Catalog["Catalog"]
         Inventories["Inventories"]
+        Payments["Payments"]
         Ordering["Ordering"]
         Reports["Reports"]
         Notifications["Notifications"]
-        Payments["Payments"]
+       
         Fulfillment["Fulfillment"]
     end
 
