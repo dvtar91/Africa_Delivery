@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1130 760" width="1130" height="760" role="img" aria-labelledby="title desc">
+<title id="title">Матрица влияния и интереса стейкхолдеров Africa Delivery</title>
+<desc id="desc">Две оси от низкого к высокому. Позиции инвестора, CEO, CFO, CTO, маркетинга, юриста, архитектора, покупателей, продавцов, бывшего PM.</desc>
+<style>.head{font:700 24px Arial,sans-serif;fill:#18324d}.quad{font:600 18px Arial,sans-serif;fill:#526a82}.label{font:15px Arial,sans-serif;fill:#143451}.axis{font:16px Arial,sans-serif;fill:#43576d}.fine{stroke:#94a7b9;stroke-width:1.3}.mid{stroke:#6985a0;stroke-width:2;stroke-dasharray:8 7}</style>
+<rect width="1130" height="760" fill="#fff"/>
+<text x="565" y="44" text-anchor="middle" class="head">Влияние / интерес — Africa Delivery</text>
+<rect x="100" y="92" width="450" height="290" fill="#edf4f7"/><rect x="550" y="92" width="450" height="290" fill="#eaf3ea"/>
+<rect x="100" y="382" width="450" height="290" fill="#f7f7f7"/><rect x="550" y="382" width="450" height="290" fill="#f3f5f9"/>
+<rect x="100" y="92" width="900" height="580" fill="none" class="fine"/>
+<path d="M550 92 V672 M100 382 H1000" class="mid"/>
+<text x="325" y="120" text-anchor="middle" class="quad">Поддерживать доверие</text><text x="775" y="120" text-anchor="middle" class="quad">Управлять напрямую</text>
+<text x="325" y="646" text-anchor="middle" class="quad">Мониторить</text><text x="775" y="646" text-anchor="middle" class="quad">Вовлекать</text>
+<text x="100" y="713" class="axis">Низкий интерес</text><text x="1000" y="713" text-anchor="end" class="axis">Высокий интерес</text>
+<text x="35" y="382" text-anchor="middle" transform="rotate(-90 35 382)" class="axis">Влияние: низкое → высокое</text>
+<circle cx="955.0" cy="103.6" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="944.0" y="94.6" text-anchor="end" class="label">Инвестор</text>
+<circle cx="892.0" cy="155.8" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="881.0" y="171.8" text-anchor="end" class="label">CEO</text>
+<circle cx="811.0" cy="155.8" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="800.0" y="146.8" text-anchor="end" class="label">CFO</text>
+<circle cx="928.0" cy="213.8" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="917.0" y="229.8" text-anchor="end" class="label">CTO</text>
+<circle cx="802.0" cy="364.6" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="791.0" y="355.6" text-anchor="end" class="label">Маркетинг</text>
+<circle cx="829.0" cy="353.0" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="818.0" y="369.0" text-anchor="end" class="label">Юрист</text>
+<circle cx="946.0" cy="405.2" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="935.0" y="396.2" text-anchor="end" class="label">Архитектор</text>
+<circle cx="910.0" cy="556.0" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="899.0" y="572.0" text-anchor="end" class="label">Покупатели</text>
+<circle cx="811.0" cy="544.4" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="800.0" y="535.4" text-anchor="end" class="label">Продавцы</text>
+<circle cx="298.0" cy="596.6" r="6" fill="#274b70" stroke="#ffffff" stroke-width="2"/><text x="309.0" y="612.6" text-anchor="start" class="label">Бывший PM</text>
+<text x="565" y="746" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#63778b">Положения на диаграмме — экспертная оценка, не результат количественного опроса</text>
+</svg>
