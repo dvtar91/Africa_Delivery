@@ -5,16 +5,21 @@
 * [Задание 4. Регуляторные ограничения и стратегия данных](Task4)
 * [Задание 5. MVP Roadmap и Build/Buy/Partner решения](Task5)
 * [Входные материалы](input information)
-  - Сруктура компании - company-structure.md
-  - Транскрипт встречи с инвестором, содержащий общие формулировки без технических деталей. - ](input information/meeting-investor.md)
-  - Маркетинговый бриф с описанием целевой аудитории и позиционирования платформы. - marketing-brief
-  - Юридическое письмо, в котором упоминается NDPR, но не раскрываются технические требования к его соблюдению. -  lawyer-letter.md 
-  - Список из 29 функций без приоритизации, составленный Product Manager. Он настаивал, что все они нужны с первого дня работы маркетплейса, однако сам уже покинул Africa Delivery. - list-of-functions-product-manager.md
-  - Письмо от CTO с требованием заложить масштабирование до десяти миллионов пользователей с первого дня и разместить всю инфраструктуру в облаке. - letter-cto.md
-  - Письмо от CFO с указанием бюджета на облачную инфраструктуру (не более пяти тысяч долларов в месяц на старте). - letter-cfo.md
-  - Записка от инвестора. - letter-investor.md
-  - Схема системы. - system-scheme.md
-  - Вложения - attachments
-    - Вложение из письма CTO - TCO_model_Africa_Delivery_template.xlsx
-    - Вложение из письма CFO - CN_check-list.docx
-* Шаблоны - templates
+  - [Сруктура компании](company-structure.md)
+  - [Транскрипт встречи с инвестором, содержащий общие формулировки без технических деталей](input information/meeting-investor.md)
+  - [Маркетинговый бриф с описанием целевой аудитории и позиционирования платформы](input information/marketing-brief)
+  - [Юридическое письмо, в котором упоминается NDPR, но не раскрываются технические требования к его соблюдению](input information/lawyer-letter.md)
+  - [Список из 29 функций без приоритизации](input information/list-of-functions-product-manager.md)
+  - [Письмо от CTO с требованием заложить масштабирование до десяти миллионов пользователей с первого дня и разместить всю инфраструктуру в облаке] - letter-cto.md
+  - [Письмо от CFO с указанием бюджета на облачную инфраструктуру](input information/letter-cfo.md)
+  - [Записка от инвестора](input information/etter-investor.md)
+  - [Схема системы](input information/system-scheme.md)
+  - [Вложения](input information/attachments)
+    - [Вложение из письма CTO](input information/attachments/TCO_model_Africa_Delivery_template.xlsx)
+    - [Вложение из письма CFO](input information/attachments/CN_check-list.docx)
+* [Шаблоны](templates)
+  - [TCO](templates/TCO)
+    - [Как работать с TCO](templates/TCO/TCO-instruction.md)
+    -  [Шаблон TCO](templates/TCO/TCO_model_Africa_Delivery_template.xlsx)
+  - [FMEA](templates/FMEA.md)
+  - [Шаблон резидентства данных](templates/data-residency-map.md)
