@@ -14,6 +14,7 @@
   - [Письмо от CFO с указанием бюджета на облачную инфраструктуру](input_data/letter-cfo.md)
   - [Записка от инвестора](input_data/etter-investor.md)
   - [Схема системы](input_data/system-scheme.md)
+  - [Таблица соответствия требований](input_data/requirements-traceability.md)
   - [Вложения](input_data/attachments)
     - [Вложение из письма CTO](input_data/attachments/TCO_model_Africa_Delivery_template.xlsx)
     - [Вложение из письма CFO](input_data/attachments/CN_check-list.docx)
