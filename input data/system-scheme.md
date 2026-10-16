@@ -1,55 +1,49 @@
 # Схема
 ```mermaid
 flowchart LR
-    Sellers["Sellers<br/>40% Market Share"]
+    Sellers["Sellers"]
 
-    subgraph Core["Core - Cloud Native"]
+    subgraph Core["Core"]
         direction TB
         Catalog["Catalog"]
         Inventories["Inventories"]
-        Ordering["Ordering - P0"]
-        Notifications["Notifications - P0"]
-        Fulfillment["Fulfillment"]
+        Ordering["Ordering"]
+        Reports["Reports"]
+        Notifications["Notifications"]
         Payments["Payments"]
+        Fulfillment["Fulfillment"]
     end
 
-    Reports["Reports"]
+    DeliveryApp["Delivery App"]
 
-    App["WP / Delivery App<br/>iPhone / Android"]
+    PaymentProviders(["Payment providers<br/>(M-PESA)"])
+    LogisticProviders(["Logistic providers"])
 
-    Logistics(["Logistics - P0"])
-    Couriers["Couriers"]
-    PaymentProviders(["Payment Providers<br/>M-PESA"])
+    Sellers -->|"API"| Catalog
+    Payments -->|"API"| Sellers
 
-    subgraph Advertising["Advertising - P1"]
-        Advertisers["Advertisers"]
-        Blockchain["Blockchain"]
-    end
-
-    Sellers -->|"SaaS / API / USD"| Catalog
-    Payments -->|"Payments / API"| Sellers
-
-    Catalog -->|"API"| App
-    App --> Ordering
-    Notifications --> App
+    Catalog --> DeliveryApp
+    DeliveryApp --> Ordering
+    Notifications --> DeliveryApp
 
     Payments --> PaymentProviders
-    Fulfillment --> Logistics
-    Logistics --> Couriers
+    Fulfillment --> LogisticProviders
 
-    Reports -.- Core
+    Platforms["Apple / Google<br/>iPhone / Android"]
+    Features["Features from PM"]
+    Couriers["Couriers"]
 
-    Advertisers --- Blockchain
+    DeliveryApp -.-> Platforms
+    Features -.-> DeliveryApp
+    LogisticProviders -.-> Couriers
 
-    classDef core fill:#e7f2eb,stroke:#438363
-    classDef external fill:#e6eefb,stroke:#507bb5
-    classDef priority fill:#fff0cd,stroke:#d29a30
-    classDef provider fill:#f9dddd,stroke:#b86666
+    classDef external fill:#e8eef8,stroke:#57759b,color:#172b4d
+    classDef core fill:#e8f2ec,stroke:#56836a,color:#183c29
+    classDef provider fill:#f8dada,stroke:#b66b6b,color:#532525
 
-    class Catalog,Inventories,Fulfillment,Payments core
-    class Sellers,App,Reports,Couriers external
-    class Ordering,Notifications,Logistics,Advertisers,Blockchain priority
-    class PaymentProviders provider
+    class Sellers,DeliveryApp,Platforms,Features external
+    class Catalog,Inventories,Ordering,Reports,Notifications,Payments,Fulfillment core
+    class PaymentProviders,LogisticProviders,Couriers provider
 ```
 # Дополнительные параметры из схемы
 | Параметр | Значение |
