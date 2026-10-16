@@ -22,12 +22,13 @@ flowchart LR
 
     Sellers -->|"API"| Catalog
     Payments -->|"API"| Sellers
+    Payments --> PaymentProviders
 
     Catalog --> DeliveryApp
     DeliveryApp --> Ordering
     Notifications --> DeliveryApp
 
-    Payments --> PaymentProviders
+    
     Fulfillment --> LogisticProviders
 
     Platforms["Apple / Google<br/>iPhone / Android"]
