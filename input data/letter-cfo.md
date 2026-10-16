@@ -8,7 +8,7 @@
 
 **Тема: Реальность бюджета — прочитайте, прежде чем что-либо обещать**
 
-**Вложения** [TCO_model_Africa_Delivery.xlsx](TCO_model_Africa_Delivery_template.xlsx)
+**Вложения** [TCO_model_Africa_Delivery.xlsx](attachments/TCO_model_Africa_Delivery_template.xlsx)
 
 Здравствуйте, и поздравляю с выходом.
 Мне сказали, что вы будете представлять архитектуру в Найроби. Прежде чем вы это сделаете — цифры, внутри которых вам предстоит работать:
