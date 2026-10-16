@@ -1,0 +1,26 @@
+# Architecture Canvas — Africa Delivery
+
+**Горизонт:** MVP к **15.10.2026** (плановое обязательство из исходных писем); пилот **Нигерия + Кения**, затем ЮАР. **Статус:** рабочее видение, не утверждённое инвестором.
+
+| Область | Содержание | Источники |
+|---|---|---|
+| **Проблема и ценность** | Недорогой мультикатегорийный маркетплейс для покупателей и продавцов в Африке; доверие, доступная доставка и локальные способы оплаты. Конкуренты Jumia/Takealot присутствуют, «рынка нет» нельзя считать фактом. | [description.md](../description.md); [input_data/marketing-brief.md](../input_data/marketing-brief.md) |
+| **Успех MVP** | Покупатель видит товар → оформляет заказ → платит → получает подтверждение; продавец может разместить товар и получить выплату. Ориентиры **5 000 SKU, 100 продавцов**, 2 страны; базовая аналитика CEO. Приёмка выплат и доставки требует отдельного gate. | [description.md](../description.md); [input_data/letter-investor.md](../input_data/letter-investor.md) |
+| **Сроки** | Рекламная кампания/запуск **15.10**, страницы в app stores **к 01.10**; медиа уже выкуплены на **$180 000**. Даты из исходного кейса, не фактически подтверждённые поставки. | [input_data/meeting-investor.md](../input_data/meeting-investor.md); [input_data/marketing-brief.md](../input_data/marketing-brief.md) |
+| **Финансовые и кадровые рамки** | **≤$5 000/мес.** на всю регулярную техническую инфраструктуру/SaaS первые 6 месяцев; согласование >$500/мес.; **6 контракторов до декабря**, runway 9 мес.; без годовой предоплаты. | [input_data/letter-cfo.md](../input_data/letter-cfo.md) |
+| **Внешние зависимости** | Лицензированные PSP (M-Pesa, Flutterwave, Paystack по странам), Sendbox/Sendy, SMS/USSD и WhatsApp; локальные data/consent требования. | [description.md](../description.md); [input_data/lawyer-letter.md](../input_data/lawyer-letter.md); [input_data/system-scheme.md](../input_data/system-scheme.md) |
+| **Драйверы качества** | 99,99% — запрос инвестора/CTO, а **не подтверждённый SLO**; устойчивость к плохой 3G/4G связи, легковесный клиент, безопасные платежи, региональные границы данных, восстановление после отказов. | [input_data/meeting-investor.md](../input_data/meeting-investor.md); [input_data/letter-cto.md](../input_data/letter-cto.md); [input_data/marketing-brief.md](../input_data/marketing-brief.md) |
+| **Архитектурное направление (гипотеза)** | Простой эволюционный backend с модульными границами, API-адаптерами PSP/логистики, очередью для асинхронных побочных действий; отказ от 40–50 сервисов **до** количественного сравнения альтернатив в ADR-001. | [input_data/letter-cto.md](../input_data/letter-cto.md); [input_data/letter-cfo.md](../input_data/letter-cfo.md) |
+| **Неподвижные ограничения** | Нельзя обойти законы через решение инвестора; нельзя обещать все 29 P0 при фиксированной ёмкости команды; нельзя считать $9 000 инфраструктурным лимитом; лицензирование платежей через партнёра. | [input_data/lawyer-letter.md](../input_data/lawyer-letter.md); [input_data/list-of-functions-product-manager.md](../input_data/list-of-functions-product-manager.md); [input_data/letter-cfo.md](../input_data/letter-cfo.md) |
+| **Главные риски** | Разрыв между рекламой и продуктом (доставка/возвраты/языки/live); покупная SMS-база без подтверждённых согласий; размещение PII; 10 млн пользователей без load-модели; отсутствие местной продуктовой команды. | [input_data/marketing-brief.md](../input_data/marketing-brief.md); [input_data/lawyer-letter.md](../input_data/lawyer-letter.md); [input_data/letter-cto.md](../input_data/letter-cto.md); [input_data/company-structure.md](../input_data/company-structure.md) |
+| **Границы MVP (предложение)** | Включить: каталог, минимальный onboarding продавцов с проверкой, заказ, оплату через согласованного PSP, статус и уведомление, оперируемый процесс поддержки/возврата. Отложить: токены, кредитный скоринг, ML, развитые кабинеты, собственный логистический движок, полноценные live-streams; **требуется решение об изменении рекламных обязательств**. | [input_data/list-of-functions-product-manager.md](../input_data/list-of-functions-product-manager.md); [input_data/marketing-brief.md](../input_data/marketing-brief.md) |
+
+## Assumptions
+
+1. **A-01:** на MVP достаточно одной операционной конфигурации на страну и партнёрских PSP/доставки при наличии договоров и допустимых комиссий; подтверждение — Task5.
+2. **A-02:** временно действует консервативная сегрегация персональных данных по юрисдикциям; конкретные трансграничные потоки **не разрешены** до заключения местных юристов; подтверждение — Task4.
+3. **A-03:** разделяем **ёмкость будущего масштабирования** и **реально оплачиваемую стартовую мощность**; нагрузочные сценарии и сравнение решений выполняются в Task2/3.
+4. **A-04:** инвариант первого релиза — оплачиваемый и подтверждённый заказ, а не все рекламные возможности; любые расхождения с рекламой выносятся CEO/инвестору **до запуска**.
+5. **A-05:** CTO выбирает технологический вариант после расчёта TCO и принятия ограничений CFO; окончательный архитектурный стиль здесь не утверждается.
+
+**Критические решения:** [Task1/contradictions.md](contradictions.md) · **Вопросы:** [Task1/open-questions.md](open-questions.md) · **Матрица:** [input_data/requirements-traceability.md](../input_data/requirements-traceability.md).
