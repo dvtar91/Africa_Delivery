@@ -1,4 +1,7 @@
 # Схема
+
+Схема составлена CTO
+
 ```mermaid
 flowchart LR
     Sellers["Sellers"]
