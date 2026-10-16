@@ -1,4 +1,4 @@
-# Матрица соответствия требований и реестр несоответствий Africa Delivery
+# Матрица соответствия требований Africa Delivery
 
 **Дата аудита:** 2026-10-16  
 **Область:** [описание проектной работы](https://github.com/dvtar91/Africa_Delivery/blob/main/description.md), [входные материалы](https://github.com/dvtar91/Africa_Delivery/tree/main/input_data), Task1–Task5 и шаблоны.  
