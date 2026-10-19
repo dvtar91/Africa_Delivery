@@ -1,4 +1,4 @@
-# Реестр нефункциональных требований — Africa Delivery (Task3)
+# Реестр нефункциональных требований — Africa Delivery
 
 **Дата:** 19.10.2026. **Статус:** проектные, проверяемые SLO/NFR для MVP, ожидают подтверждения CTO/CFO/CEO, проверки PSP и юридической допустимости размещения. Исторический срок 15.10.2026 не является подтверждением запуска. Базовая архитектура — **модульный монолит**, managed PostgreSQL после country legal gate, stateless HTTP API и transactional outbox ([ADR-001](../Task2/adr-001-architecture-style.md)). Слово «сервис» в SLO означает **наблюдаемый пользовательский путь/модуль**, а не отдельный микросервис.
 
@@ -25,7 +25,7 @@
 | NFR-19 | Security | Исключить платёжные PAN, защитить callbacks | raw PAN records; unsigned accepted hooks | 0; authenticated signature+replay protection | security test + webhook fixtures | [Vision](../Task2/architecture-vision.md) |
 | NFR-20 | Резервирование | Зависимости на PSP и SMS не распространяют каскадную ошибку | worker exhaustion, CB trips | 0 exhausted shared request pool в chaos tests | FMEA failure injection | [FMEA](fmea.md) |
 
-**Cloud Native пояснение.** CN-чек-лист CTO — набор критериев для тестирования, **не подтверждение сертификации CNCF**. Размещение «у любого провайдера» означает переносимость кода/деплоя с документированным RTO миграции и cost review, а не одинаковую managed-инфраструктуру во всех странах. Следующий gate: [Task4 data residency](../Task4/README.md).
+**Cloud Native пояснение.** CN-чек-лист CTO — набор критериев для тестирования, **не подтверждение сертификации CNCF**. Размещение «у любого провайдера» означает переносимость кода/деплоя с документированным RTO миграции и cost review, а не одинаковую managed-инфраструктуру во всех странах.
 
 ## Экономика девяток и решение
 
