@@ -18,6 +18,9 @@ assumptions = {
 }
 scenarios = [('A Монолит',2600,6,6000,50000),('B Сервисы',4700,9,18000,100000),
              ('C CTO',18500,18,80000,250000)]
+# Два национальных контура: только гипотезы для проверки, не коммерческие предложения.
+second_country_monthly=1700
+country_backup_monthly=500
 users = [50000,120000,250000,500000,1000000]
 workbook=xlsxwriter.Workbook(str(ROOT/'tco-model.xlsx'))
 hd=workbook.add_format({'bold':True,'font_color':'white','bg_color':'#17324D','text_wrap':True})
@@ -47,6 +50,10 @@ for y in range(5):
  a.write_formula(20,y+1,f'={col}20*$B$3',num)
  a.write_formula(21,y+1,f'={col}21*$B$2',num)
 a.write('A24','Все тарифы гипотетические, не договорные; input Task1 C-01/C-07.')
+a.write('A26','Второй локальный контур NG/KE, USD/мес.');a.write('B26',second_country_monthly)
+a.write('A27','Внутристрановое резервирование, USD/мес.');a.write('B27',country_backup_monthly)
+a.write('A28','Суммарное дополнительное размещение, USD/мес.');a.write_formula('B28','=SUM(B26:B27)',num)
+a.write('A29','Статус: смета не подтверждена; обязательна проверка ЦОД NG/KE и CFO.')
 a.freeze_panes(1,1)
 for name,base,fte,setup,scale in scenarios:
  s=workbook.add_worksheet(name);s.set_column('A:A',49);s.set_column('B:F',19);s.freeze_panes(3,1)
@@ -73,13 +80,29 @@ for name,base,fte,setup,scale in scenarios:
  s.write_formula('B22','=SUM(B19:F19)',num)
  s.write_formula('B23','=B21/SUM(B5:F5)',num)
  # Fixed overhead relative to A at identical user volume, not an accounting write-off
- s.write_formula('B24',f'=SUM(B8:F9)+SUM(B13:F14)-SUM(31200*(1+\'Допущения\'!$B$7)^0,31200*(1+\'Допущения\'!$B$7)^1,31200*(1+\'Допущения\'!$B$7)^2,31200*(1+\'Допущения\'!$B$7)^3,31200*(1+\'Допущения\'!$B$7)^4)-SUM(252000*(1+\'Допущения\'!$B$8)^0,252000*(1+\'Допущения\'!$B$8)^1,252000*(1+\'Допущения\'!$B$8)^2,252000*(1+\'Допущения\'!$B$8)^3,252000*(1+\'Допущения\'!$B$8)^4)-20000-4*7000-6000',num)
+ s.write_formula('B24',"=SUM(B8:F9)+SUM(B13:F14)-SUM('A Монолит'!B8:F9)-SUM('A Монолит'!B13:F14)",num)
  s.write_formula('B25','=B8/12',num)
  s.write_formula('B26',"=IF(B25<='Допущения'!$B$16,1,0)")
  s.write('B27',fte);s.write('B28',scale)
- s.write('A35','Сценарий 50k: неизменные 50k пользователей все 5 лет; B24 = difference in fixed overhead vs A.',note)
+ s.write('A35','B24 = разница фиксированных затрат относительно A (не сумма списаний); объём заказов на неё не влияет.',note)
  s.write('A36','Сценарий 10M: резерв B28 не включён в baseline; нужна проверка нагрузки и коммерческих тарифов.',note)
  s.write('A37','TCO и потери при SLO показаны отдельно, без смешения cash cost с модельным ущербом.',note)
+scenario=workbook.add_worksheet('Сценарии 50k 10M')
+scenario.set_column('A:A',51);scenario.set_column('B:D',25)
+scenario.write_row('A1',['Сценарий','A Монолит','B Сервисы','C CTO'],hd)
+scenario.write('A2','5-летняя фиксированная разница относительно A, USD')
+scenario.write('A3','Сценарий: 50 000 пользователей в каждый год')
+scenario.write('A4','Заказы в год при 2,4 заказа/пользователя')
+scenario.write_formula('B4',"=50000*'Допущения'!B3")
+scenario.write('A5','Сценарий: 10 млн пользователей, гипотеза, НЕ проверенная нагрузка')
+scenario.write('A6','Заказы в год при 2,4 заказа/пользователя')
+scenario.write_formula('B6',"=10000000*'Допущения'!B3")
+scenario.write('A7','Условная стоимость миграции при 10 млн (не baseline)')
+scenario.write('A9','Ни 50 тыс., ни 10 млн не являются фактическим прогнозом. Фиксированные затраты при 50 тыс. остаются, но не обязательно потеряны.',note)
+for j,name in enumerate(['A Монолит','B Сервисы','C CTO'],1):
+ col=xlsxwriter.utility.xl_col_to_name(j)
+ scenario.write_formula(1,j,f"='{name}'!B24",num)
+ scenario.write_formula(6,j,f"='{name}'!B28",num)
 workbook.close()
 
 FONT='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
@@ -91,9 +114,9 @@ c.setFillColor(C('#8DDEF2'));c.setFont('DejaVuBold',13);c.drawString(48,493,'AFR
 c.setFillColor(C('#FFFFFF'));c.setFont('DejaVuBold',26);c.drawString(48,444,'Модульный монолит — управляемый MVP')
 c.setFont('DejaVu',13);c.drawString(48,414,'Решение условное: CFO, CTO, CEO, Legal и инвестор должны согласовать gates')
 for i,(title,weeks,cost,fte,col) in enumerate([
- ('A  МОДУЛЬНЫЙ МОНОЛИТ','8–10 недель','$2 600/мес.','6 FTE','#167D8D'),
- ('B  5–7 СЕРВИСОВ','14–18 недель','$4 700/мес.','9 FTE','#314F69'),
- ('C  CTO: 40 СЕРВИСОВ','28–40 недель','$18 500/мес.','18 FTE','#6E3D49')]):
+ ('A  МОДУЛЬНЫЙ МОНОЛИТ','8–10 недель','$4 800/мес.','6 FTE','#167D8D'),
+ ('B  5–7 СЕРВИСОВ','14–18 недель','$6 900/мес.','9 FTE','#314F69'),
+ ('C  CTO: 40 СЕРВИСОВ','28–40 недель','$20 700/мес.','18 FTE','#6E3D49')]):
  x=46+i*306;c.setFillColor(C(col));c.roundRect(x,245,288,138,12,fill=1,stroke=0)
  c.setFillColor(C('#FFFFFF'));c.setFont('DejaVuBold',13);c.drawString(x+15,352,title)
  c.setFont('DejaVu',14);c.drawString(x+15,319,weeks)
@@ -106,7 +129,7 @@ for i,line in enumerate([
  'Не строим до спроса: Oracle, Kafka, Istio, 3 K8s, собственный logistics engine.',
  'GATES: legal/data · PSP fee < 2,5% GMV · возвраты · языки · scope рекламы.']):
  c.drawString(48,170-i*25,line)
-c.setFont('DejaVu',10);c.drawString(48,54,'Цифры — инженерные допущения, не котировки. 15.10.2026 — прошедшая дата.')
+c.setFont('DejaVu',10);c.drawString(48,54,'Цифры с двумя локальными контурами — сценарий, не котировки. 15.10.2026 — прошедшая дата.')
 c.drawString(48,35,'Источники: Task1 / options-comparison / tco-model / ADR-001')
 c.showPage();c.save()
 graphs={
