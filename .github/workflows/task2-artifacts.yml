@@ -26,7 +26,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Task2/tco-model.xlsx Task2/nairobi-slide..pdf Task2/c4-context.png Task2/use-cases.png
+          git add Task2/tco-model.xlsx Task2/nairobi-slide..pdf
           if ! git diff --cached --quiet; then
             git commit -m "Task2: publish generated TCO, slide, C4 and use-case images"
             git push
