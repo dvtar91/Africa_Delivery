@@ -1,0 +1,41 @@
+name: Сборка диаграммы Task4
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Task4/c4-container.md'
+      - '.github/workflows/task4-diagram.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Подготовить код Mermaid из документа
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path("Task4/c4-container.md").read_text(encoding="utf-8")
+          assert text.count("```mermaid") == 1, "Ожидается одна диаграмма Mermaid"
+          chart = text.split("```mermaid",1)[1].split("```",1)[0].strip()
+          assert chart.startswith("C4Container"), "Тип диаграммы должен быть C4Container"
+          Path("/tmp/task4-container.mmd").write_text(chart+"\n",encoding="utf-8")
+          PY
+      - name: Установить Mermaid CLI
+        run: npm install --no-save @mermaid-js/mermaid-cli@11.12.0
+      - name: Отрисовать PNG строго из Mermaid
+        run: |
+          echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer.json
+          npx mmdc -i /tmp/task4-container.mmd -o Task4/c4-container.png -b white -w 2000 -p /tmp/puppeteer.json
+          test -s Task4/c4-container.png
+      - name: Опубликовать результат
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Task4/c4-container.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Task4: опубликовать PNG-версию C4 Container"
+            git push
+          fi
