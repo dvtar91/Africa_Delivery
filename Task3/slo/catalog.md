@@ -1,21 +1,20 @@
-# OpenSLO-style contract: Catalog (SLI/SLO/SLA)
+# Контракт SLI/SLO/SLA — каталог (структура OpenSLO)
 
-**Status:** proposed, 19.10.2026; owner: CTO + Product. **System:** `Africa Delivery`, logical module `Catalog` of ADR-001 monolith. **Window:** rolling 30×24 hours UTC, evaluated hourly; country tags NG/KE with separate dashboards. Do not assume actual launches.
+**Статус:** проект, 19.10.2026. **Ответственные:** CTO и руководитель продукта. **Объект:** логический модуль каталога в модульном монолите ADR-001, а не самостоятельный микросервис. **Окно:** скользящие 30 суток по UTC, проверка ежечасно, раздельно по Нигерии и Кении.
 
-## SLI: what is measured
-Eligible: legitimate GET `/v1/catalog/**` and `/v1/products/**` requests reaching the edge, including synthetic probes; exclude **only** documented health checks, malformed client requests (4xx excluding 429), robots blocked by policy, and *pre-announced* synthetic load. 429 for legitimate consumers **is bad**. Good: non-5xx HTTP response with an expected body/schema (200/304 or valid 404 for a genuinely missing SKU), finished ≤1,000 ms measured at edge origin; gateway 502/503/504 **bad**, including when origin unavailable. Do not count empty successful payloads for known SKUs as good. Denominator from edge request counter plus synthetic availability probes, not only healthy app pods. Separately record request availability (correct response, regardless of latency) and latency p95/p99 for origin (do not conflate business SLI with synthetic RUM).
+## SLI — определение измерения
+**Знаменатель:** все корректные пользовательские GET-запросы к `/v1/catalog/**` и `/v1/products/**`, достигшие пограничного шлюза, включая контрольные запросы. Исключаются только документированные проверки здоровья, некорректные запросы клиента (4xx, кроме 429), заблокированные политикой роботы и заранее объявленная искусственная нагрузка. Ответ 429 на допустимый запрос — ошибка. Недоступность приложения не исключается из знаменателя.
 
-\[
-SLI_{catalog}=\frac{\#\text{ eligible correct responses in }\le 1000\text{ms}}{\#\text{ eligible requests}}
-\]
+**Числитель:** ответы за ≤1 000 мс с корректным телом и кодом 200/304 либо обоснованным 404 для отсутствующего товара. Ответы 5xx, 429, тайм-ауты, пустая карточка существующего товара и ошибки шлюза считаются неуспехом.
 
-## SLO
-- **99,9% good requests** per rolling 30 days. At 100k eligible requests, ≤100 bad request-equivalents; this is request-weighted, **not** a promise of 43,2 min real-world downtime.
-- Latency objective origin p95 ≤500ms, p99 ≤1,000ms for defined 100 catalog RPS baseline; no untested promise at 10M users.
-- Error budget = 0,1% × eligible requests; alert when burn rate >14.4× over 1h+5m (fast) or >6× over 6h+30m (slow), plus synthetic complete failure 5min.
+**Формула:** SLI = количество корректных ответов за ≤1 000 мс / количество допустимых запросов. Отдельно измеряются доля корректных ответов независимо от задержки, p95 и p99 серверной задержки и клиентское время отображения товара.
 
-## SLA (proposed only, subject to agreement)
-No legally binding external uptime guarantee exists. Proposed internal business commitment: Product receives monthly compliance report, incidents P1 if >5 consecutive minutes browse unavailable in one launch country; P2 if error budget consumption >50% in first 15 days. Repeated violations → pause risky deployments, incident review ≤2 business days, corrective plan ≤5 business days. Customer remedy/service credit **not committed** and must be approved by Legal/CFO.
+## SLO — внутренняя цель
+- Не менее **99,9%** успешных запросов за скользящие 30 суток; бюджет ошибок — **0,1% запросов**. Для 100 000 запросов допускается максимум 100 неуспешных. Это запросная метрика, а не обещание 43,2 минуты простоя.
+- При испытательной нагрузке 100 запросов каталога/с: p95 ≤500 мс, p99 ≤1 000 мс. Готовность к 10 млн пользователей не подтверждена.
+- Оповещение: скорость расходования бюджета >14,4× одновременно за 1 час и 5 минут либо >6× за 6 часов и 30 минут; полная недоступность по контрольным запросам — 5 минут.
 
-## Dependencies and exclusions
-CDN stale-while-revalidate may keep public catalog readable when origin is down; stale price/stock must not be used for chargeable checkout without live verification. Regional network and PSP failures separately tracked, not silently excluded from end-to-end telemetry. Source [NFR](../nfr-registry.md), [ADR-002](../adr-002-caching-strategy.md).
+## SLA — обязательства и последствия нарушения
+**Внешний договорный SLA отсутствует.** Предлагаемое внутреннее обязательство: ежемесячный отчёт руководителю продукта. Инцидент P1 — каталог недоступен более 5 минут подряд в одной стране; P2 — израсходовано >50% бюджета ошибок в первые 15 дней. При повторном нарушении остановить рискованные развёртывания, разобрать инцидент за 2 рабочих дня, подготовить корректирующий план за 5 дней. Компенсации покупателям не обещаны без согласования CFO и юриста.
+
+**Зависимости:** CDN может показывать устаревший публичный каталог в пределах ADR-002, но цена и остаток обязательно проверяются при оформлении заказа. Сбои внешних сетей и шлюзов учитываются отдельно, не скрываются из сквозных метрик. См. [реестр НФТ](../nfr-registry.md), [ADR-002](../adr-002-caching-strategy.md).
