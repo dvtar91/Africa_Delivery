@@ -49,5 +49,6 @@ jobs:
           git add Task1/stakeholder-influence-interest.svg Task2/c4-context.png Task2/use-cases.png
           if ! git diff --cached --quiet; then
             git commit -m "Синхронизировать диаграммы Task1–Task2 с Mermaid"
+            git pull --rebase origin main
             git push
           fi
