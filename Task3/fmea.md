@@ -1,0 +1,24 @@
+# Failure Mode and Effects Analysis — Africa Delivery
+
+**System/Process:** Modular monolith checkout, catalog, partner adapters and managed DB. **Date:** 2026-10-19. **Prepared by:** Solution Architecture. **Version:** 1.0 / planned mitigation, not observed incident frequency. Adapted from [template](../templates/FMEA.md).
+
+## Scoring
+Severity S: 1 negligible … 10 catastrophic; Occurrence O: 1 rare …10 frequent (**expert estimates**, not statistical observations); Detection D: 1 promptly/reliably detected …10 hard to detect. **RPN = S × O × D.** RPN **>100**: prioritize before go-live; any false payment confirmation or unlawful PII release is **mandatory Sev1** irrespective of RPN.
+
+| ID | Component / step | Failure mode | Effect | S | Potential cause | O | Current/planned detection | D | RPN | Recommended action / protection pattern | Owner | Status |
+|---|---|---|---|---:|---|---:|---|---:|---:|---|---|---|
+| FM-01 | Managed PostgreSQL | Writer down / connection starvation | Can't persist orders, stale inventory | 10 | AZ failure/pool exhaustion | 4 | DB connection errors, synthetic checkout, pool saturation | 3 | **120** | HA failover, pool caps, request **Bulkhead**, PITR drill; fail closed on money | CTO/SRE | Open |
+| FM-02 | M-Pesa / Flutterwave / Paystack PSP | Timeouts/webhook late | Unknown payment status, disputes | 10 | Provider outage / network | 6 | PSP latency+5xx by partner, mismatch ledger | 4 | **240** | **Circuit Breaker**, bounded **Retry with backoff** only safe status checks, payment idempotency, daily reconciliation | Payments lead | Open |
+| FM-03 | Sendbox / Sendy logistics | SLA outage / lost webhook | Can't create shipment; false delivery estimate | 7 | Partner outage | 6 | delivery adapter error + stalled shipments | 5 | **210** | **Circuit Breaker**, durable queue, reconciliation, manual exception route; no false same-day promise | Ops | Open |
+| FM-04 | WhatsApp / SMS gateway | 429/503 / low deliverability | Lost/delayed notifications | 6 | Rate limit/provider down | 7 | outbox age, reject %, DLQ | 3 | **126** | Per-channel **Bulkhead**, **Retry with exponential backoff + jitter**, consent check at replay | Messaging lead | Open |
+| FM-05 | CDN/catalog cache | Cache stampede / stale SKU | High P99, checkout stock mismatch | 8 | TTL expiry/invalidation miss | 5 | cache hit %, origin RPS, version mismatch | 4 | **160** | **Cache-Aside**, TTL jitter/singleflight, event invalidation, revalidate price/stock on checkout | Catalog lead | Open |
+| FM-06 | App pods / LB | All instances unhealthy | Catalog + checkout down | 9 | Bad release/image | 5 | synthetic 5xx, ready endpoints | 2 | **90** | rolling deployment, canary limited, automated rollback, multi-AZ | DevOps | Open |
+| FM-07 | Outbox / queue worker | Consumer halted or poison message | Payment/shipping events delayed | 8 | Bad deploy / poison payload | 5 | backlog age, DLQ count, unprocessed event counter | 3 | **120** | **Retry backoff**, DLQ, dedupe, manual replay runbook | Backend | Open |
+| FM-08 | Backup/PITR | Backup exists but restore fails | RTO/RPO breached / data loss | 10 | wrong creds/corrupt snapshot | 3 | scheduled restore test, WAL gap | 8 | **240** | weekly backup integrity and quarterly real **restore drill**, immutable copies per legal boundary | DBA/SRE | Open |
+| FM-09 | OAuth/consent/PII | Cross-country replication of customer logs | Legal violation | 10 | Incorrect log pipeline/region config | 4 | egress policy test, DLP rules, audit review | 7 | **280** | deny-by-default egress, pseudonymize logs, country-specific store and approval gate | Security/Legal | Open |
+| FM-10 | Checkout retries | Duplicate confirmation due to webhook reorder | Double debit / financial loss | 10 | missing idempotency/replay defense | 4 | ledger invariants and reconciliation alarms | 5 | **200** | idempotency key, unique external reference, signed webhook, state machine, compensating process | Payments lead | Open |
+
+## Action tracking / review
+**Priority:** RPN >100 before go-live and Sev1 invariants always; order FM-09 (280), FM-02/FM-08 (240), FM-03 (210), FM-10 (200), FM-05 (160), FM-04 (126), FM-01/FM-07 (120). **Next review:** when provider contracts, baseline RPS and legal boundary are agreed, then before any production go/no-go. Per-action owner must attach a chaos test or dated vendor SLA link: without evidence **status stays Open**. No claim that mitigations are already deployed.
+
+**Common runbooks:** PSP outage → stop retrying charge, mark pending, alert, reconcile; DB failover → prevent unsafe checkout, recovery exercise; SMS outage → retain outbox, never bypass consent; CDN degradation → bounded stale public catalog, live-check stock in checkout. Reference [quality scenarios](quality-attribute-scenarios.md) and [SLI](slo/payments.md).
