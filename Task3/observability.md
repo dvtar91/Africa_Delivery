@@ -1,56 +1,56 @@
 # Наблюдаемость и инцидент-реакция — Africa Delivery
 
-**Статус:** проектная конфигурация, инструменты **рекомендованы**, а не фактически установлены. Исходный стиль — модульный монолит ([ADR-001](../Task2/adr-001-architecture-style.md)); лимит тех-SaaS ≤$5k/мес. первые 6 месяцев. Четыре золотых сигнала считаются по catalog, оформлении заказа/payment и notifications/журнал исходящих событий, с измеримыми SLI из [контрактов](slo/catalog.md).
+**Статус:** проектная конфигурация, инструменты **рекомендованы**, а не фактически установлены. Исходный стиль — модульный монолит ([ADR-001](../Task2/adr-001-architecture-style.md)); лимит тех-SaaS ≤$5k/мес. первые 6 месяцев. Четыре золотых сигнала считаются по каталогу, оформлению и оплате заказа, уведомлениям и очереди событий, с измеримыми SLI из [контрактов](slo/catalog.md).
 
 ## Четыре золотых сигнала и связь с SLI
 
 | Сигнал | Примеры метрик с ограниченным числом меток | Связь с SLI и бизнесом | Условие оповещения |
 |---|---|---|---|
-| **Задержка** | `http_server_duration_seconds_bucket{route,method,country,component}`, `payment_intent_duration_seconds`, `журнал исходящих событий_enqueue_to_ack_seconds` | Catalog good≤1s; Checkout intent good≤3s; notifications ACK≤5min | p99 catalog>1s 10min; p99 internal оформлении заказа>3s 5min |
-| **Трафик** | `http_requests_total{route,country,status_class}`, `оформлении заказа_attempts_total`, `журнал исходящих событий_eligible_total` | Denominator good/eligible; estimate RPS vs capacity, align with marketing scenario | 2× tested RPS sustained 5min; queue ingress>drain |
-| **Ошибки** | `http_requests_total{outcome}`, `payment_false_success_total`, `psp_webhook_invalid_total`, `notification_dlq_total` | Catalog/Payment error budget; financial safety invariants | financial duplicate or false success **immediate Sev1**; multiwindow burn 14.4× |
-| **Насыщение** | `db_pool_in_use/max`, `cpu_utilization`, `worker_backlog_oldest_seconds`, `pod_restart_total`, `cdn_cache_hit_ratio` | Leading indicators for 99.9% SLO misses | DB pool>85% 10min, журнал исходящих событий oldest>10min for 5min |
+| **Задержка** | `http_server_duration_seconds_bucket{route,method,country,component}`, `payment_intent_duration_seconds`, `outbox_enqueue_to_ack_seconds` | Каталог: корректный ответ ≤1 с; оформление: сохранение намерения ≤3 с; уведомления: приём шлюзом ≤5 мин | p99 каталога >1 с в течение 10 мин; p99 оформления >3 с в течение 5 мин |
+| **Трафик** | `http_requests_total{route,country,status_class}`, `checkout_attempts_total`, `outbox_eligible_total` | Знаменатель SLI, число запросов в секунду и сопоставление с испытанной мощностью | Нагрузка выше удвоенной испытанной в течение 5 мин; приток очереди больше обработки |
+| **Ошибки** | `http_requests_total{outcome}`, `payment_false_success_total`, `psp_webhook_invalid_total`, `notification_dlq_total` | Бюджет ошибок каталога и оплаты; контроль финансовой целостности | Повторное списание или ложный успех — немедленный критический инцидент; расход бюджета >14,4× |
+| **Насыщение** | `db_pool_in_use/max`, `cpu_utilization`, `worker_backlog_oldest_seconds`, `pod_restart_total`, `cdn_cache_hit_ratio` | Ранние признаки нарушения цели 99,9% | Пул БД >85% в течение 10 мин; возраст события >10 мин в течение 5 мин |
 
-Counter **definition**: collect edge-origin traffic to avoid missing app outages; use OpenTelemetry HTTP server middleware for latency histogram, but **edge requests as denominator**. `good` counters instrument HTTP correctness plus required data semantics, not simply status <500. Instrument consent-safe gateway ACK with provider ID after durable журнал исходящих событий. PSP end-to-end terminal latency measured from persisted intent to reconciled terminal state; 15min timeout monitored. Separate NG/KE and partner; never put user IDs, transaction IDs or phone numbers in metric labels.
+**Правило подсчёта:** знаменатель берётся с пограничного шлюза, чтобы учитывать недоступность приложения. OpenTelemetry собирает гистограммы задержек. Счётчик успешных операций проверяет код HTTP и смысл ответа, а не только отсутствие 5xx. Для уведомлений учитывается подтверждение шлюза после надёжного сохранения события; для платежей — время до сверенного конечного статуса. Страны и провайдеры разделяются по меткам; номера телефонов, идентификаторы пользователей и платежей не используются как метки.
 
 ## Архитектура сбора телеметрии (Mermaid)
 
 ```mermaid
 flowchart LR
-    User["Users / synthetic probes"] --> Edge["CDN / Edge logs and availability probes"]
-    Edge --> App["Africa Delivery monolith / OTel SDK"]
-    App --> DB["PostgreSQL metrics / PITR tests"]
-    App --> PSP["PSP adapters / signed webhooks"]
-    App --> Worker["Outbox / notifications worker"]
-    Edge --> Collector["OpenTelemetry Collector (country-safe)"]
+    User["Покупатели / контрольные запросы"] --> Edge["CDN / журналы шлюза и проверки доступности"]
+    Edge --> App["Монолит Africa Delivery / OpenTelemetry"]
+    App --> DB["Метрики PostgreSQL / проверка восстановления"]
+    App --> PSP["Адаптеры PSP / подписанные вебхуки"]
+    App --> Worker["Журнал исходящих событий / обработчик"]
+    Edge --> Collector["Сборщик OpenTelemetry по юрисдикциям"]
     App --> Collector
-    DB --> Exporter["DB exporter"]
+    DB --> Exporter["Экспортёр метрик БД"]
     Worker --> Collector
     PSP --> Collector
-    Exporter --> Prom["Prometheus metrics"]
+    Exporter --> Prom["Метрики Prometheus"]
     Collector --> Prom
-    Collector --> Loki["Loki redacted logs"]
-    Collector --> Tempo["Tempo traces (sampled)"]
-    Prom --> Graf["Grafana dashboards"]
+    Collector --> Loki["Обезличенные журналы Loki"]
+    Collector --> Tempo["Выборочные трассы Tempo"]
+    Prom --> Graf["Панели Grafana"]
     Loki --> Graf
     Tempo --> Graf
-    Prom --> Rules["Alertmanager: burn-rate / payment safety"]
-    Rules --> Oncall["On-call + incident runbooks"]
+    Prom --> Rules["Alertmanager: бюджет ошибок / безопасность платежей"]
+    Rules --> Oncall["Дежурный инженер и инструкции"]
 ```
 
-Telemetry destinations/regions **are conditional upon Task4 local counsel approval**; default no cross-border PII/log exporting. Named products are examples of OSS components, subject to cost, security and operational review; *no requirement to deploy full Jaeger+Loki+Kafka+Istio at MVP*.
+Регионы хранения телеметрии утверждаются только после заключений местных юристов в Task4; трансграничная передача персональных данных и журналов по умолчанию запрещена. Названные инструменты — варианты свободного ПО, а не обязательство развернуть весь стек Jaeger, Loki, Kafka и Istio для MVP.
 
 ## Инструментирование и выборка
-- Every inbound request receives trace context (W3C Trace Context); propagate traceparent over HTTP and via `traceparent` metadata in журнал исходящих событий. Trace spans: edge → catalog/order module → DB → adapter call → webhook reconcile → worker. Correlate `trace_id` in redacted structured logs; **trace IDs** not high-cardinality metric labels.
-- Server traces: parent-based head-sampling 5% baseline, **100% retained errors where the collector supports tail sampling** (otherwise report observed bias); financial events always audited in неизменяемый, permissioned journal **not** by retaining every trace.
-- JSON logs: UTC timestamp, route template, country, sanitized outcome, duration, trace ID, partner alias, severity; omit PAN, tokens, mobile numbers, raw addresses, PII and payloads. Retention proposed logs 14 days, traces 7 days, aggregated SLI 90 days **subject to legal and finance review**, not a decided legal retention period.
-- Metrics retention 90 days where feasible; low-cardinality labels limited to route template, country, payment provider, status class. Partner-sensitive commercial figures separate secure BI.
-- Synthetic probes: catalog every minute from approved country network, оформлении заказа PSP sandbox every 5 min (no real charges), notification canary every 5 min to consented test recipient. Synthetic probes must **not** inflate customer financial KPIs.
+- Каждый входящий запрос получает контекст трассировки W3C; поле `traceparent` передаётся по HTTP и в метаданных очереди событий. Участки трассы: шлюз → каталог/заказ → БД → партнёрский адаптер → сверка вебхука → обработчик. Поле `trace_id` связывает обезличенные журналы; его нельзя использовать как метку метрики.
+- Трассировка: исходная выборка 5% запросов с наследованием решения от родителя; при поддержке выборки по результату сохранять все ошибочные трассы. Финансовые события всегда отражать в защищённом неизменяемом журнале, а не полагаться на выборочную трассировку.
+- Структурированные журналы JSON: время UTC, шаблон маршрута, страна, обезличенный результат, длительность, идентификатор трассы, провайдер и уровень события. Не сохранять номера карт, токены, телефоны, адреса и персональные данные. Предлагаемые сроки: журналы 14 дней, трассы 7 дней, агрегированные SLI 90 дней; сроки требуют согласования юристов и CFO.
+- Метрики хранить до 90 дней при допустимой стоимости. Метки ограничить шаблоном маршрута, страной, провайдером и классом статуса. Коммерческие сведения партнёров хранить отдельно с ограниченным доступом.
+- Контрольные запросы: каталог каждую минуту из разрешённой сети; оформление в тестовой среде PSP каждые 5 минут без настоящих списаний; тестовое уведомление каждые 5 минут согласившемуся адресату. Контрольные операции не должны увеличивать финансовые показатели.
 
 ## Оповещения, SLO и инструкции дежурного
-**Sev1:** false-positive paid state, duplicate confirmed payment, unauthorized PII transfer, оформлении заказа unavailable >2min in country. Page on-call immediately; freeze deployments; CFO/Безопасность/Legal escalation for money/data incidents. **Sev2:** catalog hard outage >5min, журнал исходящих событий backlog age>10min continuously 5min, burning >50% monthly budget by day 15. **Sev3:** isolated latency, cache hit ratio below цель испытаний with no SLA impact. Use two independent signals (SLI + synthetic) to reduce alert fatigue; no alerting based solely on a 200 status.
-**Burn:** alerts for 99.9% 30-day window: 14.4× over 1h+5m, 6× over 6h+30m. Policies for 99.0% notification calculated with own 1% error budget. Error budget exhaustion → pause noncritical deploys, CTO review and backlog paydown; don't silently amend denominator or exclude PSP faults.
-**Runbooks:** [FMEA](fmea.md) FM-01 DB down restore / kill switches, FM-02 PSP unknown state → pending and reconciliation, FM-03 partner delivery down → manual fallback, FM-04 SMS down → журнал исходящих событий retained, FM-08 backup restore; postmortem ≤2 working days for Sev1, corrective plan in 5.
+**Критический инцидент (Sev1):** ложная оплата, повторное списание, неразрешённая передача данных или недоступность оформления >2 минут в стране. Немедленно вызвать дежурного, остановить развёртывания и привлечь CFO, безопасность и юристов. **Значительный инцидент (Sev2):** каталог недоступен >5 минут, возраст очереди >10 минут в течение 5 минут или более половины месячного бюджета ошибок израсходовано к 15-му дню. **Незначительный инцидент (Sev3):** отдельные задержки или падение доли попаданий в кеш без нарушения SLO. Использовать SLI и контрольные запросы вместе, а не один код 200.
+**Скорость расходования бюджета ошибок:** для цели 99,9% за 30 суток оповещать при 14,4× за 1 час и 5 минут либо 6× за 6 часов и 30 минут. Для уведомлений с целью 99,0% использовать собственный бюджет 1%. При исчерпании приостановить необязательные выпуски, провести разбор CTO; не изменять знаменатель задним числом и не скрывать отказы PSP.
+**Инструкции дежурного:** [FMEA](fmea.md) FM-01 — отказ БД и восстановление; FM-02 — неопределённый статус PSP и сверка; FM-03 — ручная обработка доставки; FM-04 — сохранение очереди при отказе SMS; FM-08 — восстановление копий. Критический инцидент разобрать за 2 рабочих дня, план исправления — за 5.
 
 ## Проверка и эксплуатационные расходы
-Before production, run staging faults (Toxiproxy for PSP/SMS, kill app, DB failover), verify alerts within 5min, trace consistency and no PII leak, test replayed webhooks/журнал исходящих событий, audit alert routing. Expenses for telemetry storage, sampling, retention and on-call count toward $5k technical infrastructure/SaaS cap; no invented vendor quotes or implied CFO approval. Controls map to [NFR-17](nfr-registry.md) and Task1 R-07/R-08/R-09/R-10/R-26.
+Перед эксплуатацией испытать сбои PSP/SMS через Toxiproxy, остановку приложения и переключение БД; проверить оповещения ≤5 минут, связь трасс, отсутствие утечек и повторную обработку вебхуков. Хранение телеметрии и дежурство учитываются в техническом лимите $5 000/мес. Тарифы поставщиков и согласование CFO не подтверждены. Соответствие: [NFR-17](nfr-registry.md), Task1 R-07/R-08/R-09/R-10/R-26.
