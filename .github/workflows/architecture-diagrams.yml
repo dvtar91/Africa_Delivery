@@ -1,0 +1,53 @@
+name: Проверка и экспорт диаграмм Task1–Task2
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Task1/stakeholder-matrix.md'
+      - 'Task2/c4-context.md'
+      - 'Task2/use-cases.md'
+      - '.github/workflows/architecture-diagrams.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Выделить исходный Mermaid
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          items = {
+            'Task1/stakeholder-matrix.md': ('quadrantChart','/tmp/stakeholders.mmd'),
+            'Task2/c4-context.md': ('C4Context','/tmp/context.mmd'),
+            'Task2/use-cases.md': ('flowchart','/tmp/usecases.mmd'),
+          }
+          for source,(prefix,out) in items.items():
+            text=Path(source).read_text(encoding='utf-8')
+            assert text.count('```mermaid')==1, source
+            chart=text.split('```mermaid',1)[1].split('```',1)[0].strip()
+            assert chart.startswith(prefix), source
+            Path(out).write_text(chart+'\n',encoding='utf-8')
+          PY
+      - name: Установить Mermaid CLI
+        run: npm install --no-save @mermaid-js/mermaid-cli@11.12.0
+      - name: Сформировать изображения
+        run: |
+          echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer.json
+          npx mmdc -i /tmp/stakeholders.mmd -o Task1/stakeholder-influence-interest.svg -b white -p /tmp/puppeteer.json
+          npx mmdc -i /tmp/context.mmd -o Task2/c4-context.png -b white -w 2100 -p /tmp/puppeteer.json
+          npx mmdc -i /tmp/usecases.mmd -o Task2/use-cases.png -b white -w 2100 -p /tmp/puppeteer.json
+          test -s Task1/stakeholder-influence-interest.svg
+          test -s Task2/c4-context.png
+          test -s Task2/use-cases.png
+      - name: Опубликовать
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Task1/stakeholder-influence-interest.svg Task2/c4-context.png Task2/use-cases.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Синхронизировать диаграммы Task1–Task2 с Mermaid"
+            git push
+          fi
