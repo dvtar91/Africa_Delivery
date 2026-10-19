@@ -1,22 +1,22 @@
-# OpenSLO-style contract: Notifications
+# Контракт SLI/SLO/SLA — уведомления
 
-**Status:** proposed, 19.10.2026; owner: Product + Operations. Notification is a logical outbox worker in the ADR-001 monolith, NOT an externally guaranteed SMS/WhatsApp delivery service.
+**Статус:** проект, 19.10.2026. **Ответственные:** руководитель продукта и Operations. **Объект:** логический модуль уведомлений и обработчик исходящих событий модульного монолита, а не собственная служба SMS/WhatsApp.
 
-## SLI
-Denominator: lawful, correctly addressed, consent-eligible **transactional** messages committed to outbox (channel, country, event timestamp); exclude messages suppressed **before enqueue** according to consent rules, test events and verified invalid recipient IDs. Good if accepted (provider ACK/id) by SMS/WhatsApp gateway within **5 minutes** after outbox commit. Delivery to handset is a different downstream SLI and is **not** measurable solely from gateway acceptance. No messages are sent to purchased 410k-list until separate legal permission.
+## SLI — измерение
+**Знаменатель:** правомерные транзакционные уведомления с допустимым адресатом и подтверждённым основанием, сохранённые в таблице исходящих событий. До помещения в очередь исключаются сообщения, запрещённые правилами согласия, тестовые события и заведомо некорректные адресаты.
 
-\[
-SLI_{notify}=gatewayAcceptedWithin5m/validEnqueued
-\]
+**Числитель:** сообщения, принятые шлюзом SMS/WhatsApp с идентификатором подтверждения **за ≤5 минут** после фиксации события. Принятие шлюзом не означает доставку на телефон; для последней нужен отдельный показатель. Купленная база из 410 тысяч номеров не используется без юридического разрешения.
+
+**Формула:** SLI = число правомерных сообщений, принятых шлюзом за 5 минут / число правомерных событий в очереди.
 
 ## SLO
-- ≥**99,0%** good valid enqueued events in rolling 30d UTC; separately track DLQ rate, backlog age, provider rejects and channel country distribution.
-- p99 enqueue-to-gateway-ack ≤5 minutes for SLO-compliant paths (a p99 latency can be infeasible exactly at 99% edge; report percentiles and good-event ratio separately).
-- Dead-letter queue has zero unexamined items aged >1 hour at end of staffed monitoring interval (operational target).
-- During PSP outage, no false `paid` notification, and notification retry must never retry payment itself.
+- **≥99,0%** за скользящие 30 суток UTC. Бюджет ошибок — 1% событий.
+- Отдельно отслеживать p99 времени от события до подтверждения шлюза, возраст очереди, долю отклонений провайдера и число сообщений в очереди ошибок.
+- Цель обработки ошибок: нет непросмотренных сообщений старше 1 часа в очереди ошибок в пределах дежурного периода.
+- При недоступности PSP не отправлять ложное уведомление об оплате; повтор уведомления никогда не должен повторять сам платёж.
 
-## SLA (proposed internal only)
-Product receives daily status, incident Sev2 if queue age >10 min continuously for ≥5 min or SLO error budget exhausted; Sev1 only when critical payment confirmation is falsely sent or legally restricted bulk notification is dispatched. Operations restores queue/partner integration, communicates delayed alerts without promising gateway or handset delivery. No external service credits/remedies until partner contract/Legal approval.
+## SLA и действия
+Внешний договорный SLA не заключён. Предлагается ежедневный отчёт руководителю продукта. Sev2 — возраст очереди >10 минут в течение ≥5 минут или исчерпан бюджет ошибок. Sev1 — ложное подтверждение оплаты либо незаконная массовая рассылка. Operations восстанавливает очередь и информирует о задержке без обещания доставки на устройство. Компенсации возможны только после договора и юридического согласования.
 
-## Resilience and traceability
-Outbox polling, bounded exponential retry+full jitter, provider circuit breaker and country/channel-specific bulkheads; DLQ manual replay with idempotent external request IDs and consent revalidation. Dependency on partner outages shown explicitly. Sources [ADR-001](../../Task2/adr-001-architecture-style.md), [Task1](../../Task1/contradictions.md), [Observability](../observability.md).
+## Отказоустойчивость
+Повторная отправка из надёжного журнала событий с ограниченным экспоненциальным интервалом и случайным разбросом; автоматический выключатель провайдера, отдельные пулы по стране/каналу, очередь ошибок и ручной повтор с новым контролем согласия и идемпотентности. Сбои партнёров отображаются в показателях. См. [Task1](../../Task1/contradictions.md), [наблюдаемость](../observability.md).
