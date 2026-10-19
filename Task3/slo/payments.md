@@ -1,25 +1,22 @@
-# OpenSLO-style contract: Payments / checkout
+# Контракт SLI/SLO/SLA — оформление и подтверждение платежа
 
-**Status:** proposed 19.10.2026; owner: CTO + CFO + PSP integration lead. A logical `Payment/Order` journey within the monolith, NOT proprietary licensed payment processing. Requires country×method×PSP contract validation (Task1 C-07).
+**Статус:** проект, 19.10.2026. **Ответственные:** CTO, CFO, руководитель платёжной интеграции. **Объект:** логические модули заказа и оплаты модульного монолита; платёжный процессинг выполняет лицензированный PSP. Параметры по стране, способу оплаты и провайдеру требуют договорной проверки (Task1 C-07).
 
-## SLI
-**Checkout intent availability**: denominator all eligible authenticated buyer checkout POST attempts received at the edge with valid items, including duplicate retry attempts as separately tracked HTTP attempts; good if **within 3 seconds** the backend durably persists an order/intent, returns valid `pending`/redirect/payment-provider request or a correctly identified *business* decline; 5xx, timeout, missing persist or false `paid` are bad. Real PSP unavailability counted in **end-to-end completion SLI**, not hidden by a backend pending response.
+## SLI — измерение
+**SLI-1, доступность создания платёжного намерения.** Знаменатель — все допустимые POST-запросы оформления заказа, достигшие пограничного шлюза с корректной корзиной, включая повторные попытки. Числитель — запросы, для которых за ≤3 с надёжно сохранены заказ и платёжное намерение и возвращён корректный статус ожидания/переадресации либо обоснованный бизнес-отказ. Ошибки 5xx, тайм-аут, отсутствие записи и ложный статус «оплачено» — неуспех.
 
-**PSP journey completion** (secondary dependency SLI): eligible paid-intent journeys reach a reconciled terminal state within 15 minutes, excluding *only verified user cancellation*, measured from intent creation; `pending` >15m and unmatched callback are bad. Track reason breakdown: PSP down, fraud hold, bank/settlement, timeout. Instrument approved PSP per country and partner SLA separately.
+**SLI-2, сквозное завершение платежа через PSP.** Знаменатель — все допустимые платёжные намерения, переданные провайдеру, за исключением подтверждённых отмен самим пользователем. Числитель — намерения с проверенным конечным статусом и успешной сверкой не позднее 15 минут после создания. Незавершённый статус дольше 15 минут или несопоставленный callback — неуспех. Сбои PSP не исключаются; отдельно отображаются причины и показатели каждого провайдера.
 
-\[
-SLI_{intent}=goodIntentResponses/eligibleCheckoutRequests;\quad
-SLI_{settlement}=reconciledTerminalIntents_{15m}/eligiblePaidIntents
-\]
+**Формулы:** SLI-1 = корректные ответы о намерении / допустимые запросы; SLI-2 = сверенные конечные статусы за 15 минут / допустимые платёжные намерения.
 
 ## SLO
-- **Intent good response ≥99,9%** over rolling 30 UTC days (fast burn alerts as in catalog). Origin p95 ≤1.5s and p99 ≤3s excluding PSP network delay, but PSP E2E separately measured.
-- **Terminal PSP journey ≥99,0%** in 15 min, **provisional, partner-dependent**, not promised to customers until PSP commercial SLA and sandbox/production verification.
-- Duplicate confirmed charges caused by platform = **0** (safety invariant, immediate Sev1 on detection); audit, idempotency key, signed hooks, outbox and daily reconciliation mandatory.
-- Recovery objective proposed **RTO ≤60min / RPO ≤15min** for local database tier, validated by drill. For *financial ledger*, data-loss safety requirement is reconciliation-to-zero unmatched after recovery; **not** a claim that RPO=0.
+- **SLI-1 ≥99,9%** за скользящие 30 суток UTC; внутренняя серверная задержка p95 ≤1,5 с, p99 ≤3 с, без времени ответа внешнего PSP.
+- **SLI-2 ≥99,0%** за 15 минут — предварительная цель, зависимая от договоров с PSP; не является гарантией клиенту.
+- **Ноль** подтверждённых повторных списаний по вине платформы и ложных статусов оплаты. Проверять идемпотентность, подписи вебхуков, журнал событий, сверку.
+- Предлагаемые цели восстановления: RTO ≤60 минут и RPO ≤15 минут для БД после проверенного восстановления. Для денежных событий требуется устранить все расхождения по сверке; это **не заявление RPO=0**.
 
-## SLA (proposed internal)
-No executed contractual end-to-end SLA or same-day seller settlement guarantee. Internal handling: checkout intents completely unavailable >2min country-wide = Sev1; false payment success/duplicate charge = Sev1 immediately; paid-intent unmatched >15min enters queue with on-call alert; cases unresolved >60min escalate to CFO/ops. Within 1 business day produce incident timeline; dispute/refund follows legal/PSP terms, not fabricated instant-refund SLA. Legal and CFO must approve user-facing promises/remedies.
+## SLA и эскалация
+Подписанный сквозной SLA и гарантия выплаты продавцу в тот же день отсутствуют. Внутренний критический инцидент Sev1: полная недоступность оформления более 2 минут в стране, любое двойное списание или ложное подтверждение. Неподтверждённые намерения старше 15 минут ставятся на сверку; после 60 минут — эскалация CFO и Operations. Хронология критического инцидента — за 1 рабочий день. Условия возврата и компенсации утверждаются юридически и договором PSP.
 
-## Failure handling
-Do not infinitely retry non-idempotent create-charge; persist idempotency key. On PSP timeout, show pending; query status/reconcile before retry; exponential backoff with jitter, bounded attempts, circuit breaker, partner bulkhead. No secret or PAN in traces. Sources [ADR-001](../../Task2/adr-001-architecture-style.md), [FMEA](../fmea.md).
+## Защита
+Повторно создавать неидемпотентное списание при тайм-ауте запрещено. Сохранять ключ идемпотентности; показывать «ожидается», затем запрашивать статус и сверять. Ограниченные повторы с экспоненциальной задержкой и случайным разбросом, автоматический выключатель внешнего вызова, изоляция пулов по провайдерам. Секреты и карточные данные не писать в трассы. См. [ADR-001](../../Task2/adr-001-architecture-style.md), [FMEA](../fmea.md).
